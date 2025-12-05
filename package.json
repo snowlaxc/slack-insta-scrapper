@@ -1,0 +1,24 @@
+{
+    "name": "slack-aiep-tsis",
+    "version": "1.0.0",
+    "description": "Instagram scraper and Slack bot for TSIS",
+    "main": "src/app.js",
+    "scripts": {
+        "start": "node src/app.js",
+        "scrape": "./venv/bin/python src/scraper.py",
+        "test": "./venv/bin/python tests/test_scraper.py",
+        "deploy": "pm2 start src/app.js --name slack-aiep-tsis",
+        "stop": "pm2 stop slack-aiep-tsis",
+        "restart": "pm2 restart slack-aiep-tsis",
+        "logs": "pm2 logs slack-aiep-tsis",
+        "startup": "pm2 startup",
+        "save": "pm2 save"
+    },
+    "dependencies": {
+        "@slack/bolt": "^3.12.2",
+        "date-holidays": "^3.23.0",
+        "dotenv": "^16.0.3",
+        "node-schedule": "^2.1.1",
+        "pm2": "^6.0.14"
+    }
+}

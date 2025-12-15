@@ -30,13 +30,21 @@ function runScraper() {
 }
 
 function initScraperJob() {
-    // Run every day at 09:55 AM (configurable via SCRAPE_SCHEDULE)
-    const scrapeSchedule = process.env.SCRAPE_SCHEDULE || '55 9 * * *';
-    schedule.scheduleJob(scrapeSchedule, async function () {
+    // Parse SCRAPE_SCHEDULE or use default (10:55 AM KST)
+    const scrapeSchedule = process.env.SCRAPE_SCHEDULE || '55 10 * * *';
+    const [minute, hour] = scrapeSchedule.split(' ');
+    
+    // Use RecurrenceRule with timezone to ensure KST execution
+    const rule = new schedule.RecurrenceRule();
+    rule.hour = parseInt(hour);
+    rule.minute = parseInt(minute);
+    rule.tz = 'Asia/Seoul';
+    
+    schedule.scheduleJob(rule, async function () {
         console.log('Starting daily scrape job...');
         await runScraper();
     });
-    console.log(`Initialized daily scraper job with schedule: ${scrapeSchedule}`);
+    console.log(`Initialized daily scraper job at ${hour}:${minute} KST`);
 }
 
 async function sendImageToUser(app, userId) {
@@ -48,7 +56,7 @@ async function sendImageToUser(app, userId) {
             console.log(`Image not found for ${userId}, attempting to scrape...`);
             const scraped = await runScraper();
             if (!scraped) {
-                const profileUrl = process.env.INSTAGRAM_PROFILE_URL || 'https://www.instagram.com/tsis_coys/';
+                const profileUrl = process.env.INSTAGRAM_PROFILE_URL;
                 await app.client.chat.postMessage({
                     channel: userId,
                     text: `오늘의 새로운 소식을 가져오지 못했습니다. 😢\n아래 링크에서 직접 확인해주세요!\n${profileUrl}`
@@ -76,7 +84,7 @@ async function sendImageToUser(app, userId) {
                 console.log(`Sent image to ${userId}`);
             } catch (uploadError) {
                 console.error(`Failed to upload file to ${userId}:`, uploadError);
-                const profileUrl = process.env.INSTAGRAM_PROFILE_URL || 'https://www.instagram.com/tsis_coys/';
+                const profileUrl = process.env.INSTAGRAM_PROFILE_URL;
                 await app.client.chat.postMessage({
                     channel: userId,
                     text: `이미지를 전송하는 중 오류가 발생했습니다. 😢\n아래 링크에서 직접 확인해주세요!\n${profileUrl}`
@@ -86,7 +94,7 @@ async function sendImageToUser(app, userId) {
     } catch (error) {
         console.error(`Failed to send to ${userId}:`, error);
         try {
-            const profileUrl = process.env.INSTAGRAM_PROFILE_URL || 'https://www.instagram.com/tsis_coys/';
+            const profileUrl = process.env.INSTAGRAM_PROFILE_URL;
             await app.client.chat.postMessage({
                 channel: userId,
                 text: `알 수 없는 오류가 발생했습니다. 😢\n아래 링크에서 직접 확인해주세요!\n${profileUrl}`
